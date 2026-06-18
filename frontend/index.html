@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC Urban Mobility Explorer</title>
+  <meta name="description"
+    content="Interactive dashboard for exploring New York City taxi trip data — urban mobility patterns, fare analytics, speed analysis, and zone intelligence." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+
+
+  <main class="main-content">
+
+    <!-- ── GLOBAL FILTER BAR ── -->
+    <header class="filter-bar glass" id="filter-bar">
+      <div class="filter-bar-title">
+        <h1>NYC Taxi Analytics</h1>
+        <span class="filter-bar-sub" id="trip-count-badge">Loading…</span>
+      </div>
+      <div class="filter-controls">
+
+        <div class="filter-group">
+          <label for="filter-borough">Borough</label>
+          <select id="filter-borough" class="filter-select">
+            <option value="">All Boroughs</option>
+            <option value="Manhattan">Manhattan</option>
+            <option value="Brooklyn">Brooklyn</option>
+            <option value="Queens">Queens</option>
+            <option value="Bronx">Bronx</option>
+            <option value="Staten Island">Staten Island</option>
+            <option value="EWR">EWR</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-rush">Time Period</label>
+          <select id="filter-rush" class="filter-select">
+            <option value="">All Times</option>
+            <option value="true">Rush Hour Only</option>
+            <option value="false">Off-Peak Only</option>
+          </select>
+        </div>
+
+        <button class="btn-apply" id="btn-apply">
+          <span>Apply Filters</span>
+          <span class="btn-spinner" id="btn-spinner" hidden></span>
+        </button>
+
+        <button class="btn-reset" id="btn-reset">Reset</button>
+      </div>
+    </header>
+
+    <!-- ════════════════════════ SECTION: OVERVIEW ═════════════════════════ -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <h2 class="section-title">Overview</h2>
+        <p class="section-desc">High-level KPIs across all filtered trips</p>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card glass" id="kpi-trips">
+          <div class="kpi-icon"></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Total Trips</span>
+            <span class="kpi-value" id="kpi-total-trips">—</span>
+          </div>
+          <div class="kpi-glow kpi-glow--yellow"></div>
+        </div>
+        <div class="kpi-card glass" id="kpi-fare">
+          <div class="kpi-icon"></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Avg Fare</span>
+            <span class="kpi-value" id="kpi-avg-fare">—</span>
+          </div>
+          <div class="kpi-glow kpi-glow--green"></div>
+        </div>
+        <div class="kpi-card glass" id="kpi-distance">
+          <div class="kpi-icon"></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Avg Distance</span>
+            <span class="kpi-value" id="kpi-avg-dist">—</span>
+          </div>
+          <div class="kpi-glow kpi-glow--blue"></div>
+        </div>
+        <div class="kpi-card glass" id="kpi-speed">
+          <div class="kpi-icon"></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Avg Speed</span>
+            <span class="kpi-value" id="kpi-avg-speed">—</span>
+          </div>
+          <div class="kpi-glow kpi-glow--purple"></div>
+        </div>
+        <div class="kpi-card glass" id="kpi-rush">
+          <div class="kpi-icon"></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Rush Hour %</span>
+            <span class="kpi-value" id="kpi-rush-pct">—</span>
+          </div>
+          <div class="kpi-glow kpi-glow--red"></div>
+        </div>
+        <div class="kpi-card glass" id="kpi-tip">
+          <div class="kpi-icon"></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Avg Tip</span>
+            <span class="kpi-value" id="kpi-avg-tip">—</span>
+          </div>
+          <div class="kpi-glow kpi-glow--orange"></div>
+        </div>
+      </div>
+
+      <!-- Borough Distribution Doughnut -->
+      <div class="charts-row">
+        <div class="chart-card glass chart-card--wide">
+          <div class="chart-header">
+            <h3>Trips by Borough</h3>
+            <p>Pickup distribution across NYC boroughs</p>
+          </div>
+          <div class="chart-wrap chart-wrap--doughnut">
+            <canvas id="chart-borough" aria-label="Trips by borough doughnut chart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card glass chart-card--wide">
+          <div class="chart-header">
+            <h3>Borough Performance Matrix</h3>
+            <p>Avg fare vs. avg distance per borough</p>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-borough-bar" aria-label="Borough fare and distance bar chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="section" id="temporal">
+      <div class="section-header">
+        <h2 class="section-title"> Temporal Patterns</h2>
+        <p class="section-desc">How trip demand shifts across hours and days</p>
+      </div>
+
+      <div class="chart-card glass">
+        <div class="chart-header">
+          <h3>Hourly Trip Volume</h3>
+          <p>Number of trips by pickup hour (0–23). Rush windows highlighted in amber.</p>
+        </div>
+        <div class="chart-wrap chart-wrap--tall">
+          <canvas id="chart-hourly" aria-label="Hourly trip volume chart"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <h3>Day-of-Week Demand</h3>
+            <p>Total trips per weekday — reveals weekend vs. weekday patterns</p>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-daily" aria-label="Day of week trip volume chart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <h3>Avg Fare by Hour</h3>
+            <p>How fares fluctuate through the day</p>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-hourly-fare" aria-label="Average fare by hour chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="section" id="geography">
+      <div class="section-header">
+        <h2 class="section-title">Geography & Zones</h2>
+        <p class="section-desc">The hottest pickup and drop-off corridors in NYC</p>
+      </div>
+
+      <div class="zone-type-toggle">
+        <button class="toggle-btn active" id="btn-pickup" data-type="pickup">Top Pickup Zones</button>
+        <button class="toggle-btn" id="btn-dropoff" data-type="dropoff"> Top Drop-off Zones</button>
+        <div class="zone-limit-group">
+          <label for="zone-limit">Show top</label>
+          <select id="zone-limit" class="filter-select filter-select--sm">
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="chart-card glass">
+        <div class="chart-header">
+          <h3 id="zone-chart-title">Top 10 Pickup Zones</h3>
+          <p>Ranked by total trip volume; filtered by selected borough</p>
+        </div>
+        <div class="chart-wrap chart-wrap--tall">
+          <canvas id="chart-zones" aria-label="Top zones horizontal bar chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Top zones table -->
+      <div class="chart-card glass">
+        <div class="chart-header">
+          <h3>Zone Detail Table</h3>
+          <p>Sortable breakdown with fare and distance averages</p>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="zones-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th class="sortable" data-col="zone">Zone ↕</th>
+                <th class="sortable" data-col="borough">Borough ↕</th>
+                <th class="sortable active-sort" data-col="total_trips">Trips ↕</th>
+                <th class="sortable" data-col="avg_fare">Avg Fare ↕</th>
+                <th class="sortable" data-col="avg_distance">Avg Dist ↕</th>
+              </tr>
+            </thead>
+            <tbody id="zones-tbody">
+              <tr>
+                <td colspan="6" class="loading-cell">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="section" id="economics">
+      <div class="section-header">
+        <h2 class="section-title"> Economics & Fares</h2>
+        <p class="section-desc">Fare distribution and tipping behaviour across NYC</p>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card glass chart-card--wide">
+          <div class="chart-header">
+            <h3>Fare Distribution</h3>
+            <p>How fares are spread — identifies the most common fare range</p>
+          </div>
+          <div class="chart-wrap chart-wrap--tall">
+            <canvas id="chart-fare-dist" aria-label="Fare distribution histogram"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <h3>Tipping Behaviour by Borough</h3>
+            <p>Average tip % — reveals passenger generosity by area</p>
+          </div>
+          <div class="chart-wrap chart-wrap--tall">
+            <canvas id="chart-tip-borough" aria-label="Average tip percentage by borough"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    ══════════════════════ -->
+    <section class="section" id="speed">
+      <div class="section-header">
+        <h2 class="section-title">Speed & Congestion</h2>
+        <p class="section-desc">Traffic velocity patterns — engineered from trip distance ÷ duration</p>
+      </div>
+
+      <div class="chart-card glass">
+        <div class="chart-header">
+          <h3>Average Speed by Hour of Day</h3>
+          <p>Slower speeds indicate higher congestion. Morning and evening rush hours visible as valleys.</p>
+        </div>
+        <div class="chart-wrap chart-wrap--tall">
+          <canvas id="chart-speed" aria-label="Average speed mph by hour chart"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <h3>Speed vs. Trip Count Overlay</h3>
+            <p>Dual axis: volume & speed — when the city is both busiest and slowest</p>
+          </div>
+          <div class="chart-wrap chart-wrap--tall">
+            <canvas id="chart-speed-volume" aria-label="Speed and volume dual axis chart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <h3>Congestion Heatmap</h3>
+            <p>Rush vs. off-peak speed comparison per borough</p>
+          </div>
+          <div class="chart-wrap chart-wrap--tall">
+            <canvas id="chart-congestion" aria-label="Congestion bar comparison chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="section" id="transparency">
+      <div class="section-header">
+        <h2 class="section-title">Data Quality & Transparency</h2>
+        <p class="section-desc">Pipeline anomaly log — records excluded and reasons why</p>
+      </div>
+
+      <div class="transparency-grid" id="transparency-grid">
+        <div class="loading-placeholder glass">Loading pipeline report…</div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner-ring"></div>
+      <p>Loading mobility data…</p>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+
+</html>
