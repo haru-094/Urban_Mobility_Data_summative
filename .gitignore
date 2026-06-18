@@ -1,0 +1,117 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# uv (Python package manager)
+# ─────────────────────────────────────────────────────────────────────────────
+.python-version
+uv.lock
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Data — raw inputs (large CSV / parquet / shapefiles)
+# ─────────────────────────────────────────────────────────────────────────────
+backend/raw_data/*.csv
+backend/raw_data/*.parquet
+backend/raw_data/*.json
+backend/raw_data/taxi_zones/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Data — processed / generated outputs
+# ─────────────────────────────────────────────────────────────────────────────
+backend/final_data/*.db
+backend/final_data/*.sqlite3
+backend/final_data/*.parquet
+backend/final_data/*.csv
+
+# Keep the transparency log (small, meaningful to track)
+!backend/final_data/anomaly_transparency_log.json
+
+# Legacy data paths (kept for safety)
+backend/data/raw/
+backend/data/processed/
+*.db
+*.sqlite3
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Jupyter
+# ─────────────────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Environment & secrets
+# ─────────────────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OS artifacts
+# ─────────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IDEs & editors
+# ─────────────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*~
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Logs & temp files
+# ─────────────────────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.temp
