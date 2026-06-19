@@ -56,6 +56,8 @@ Urban_Mobility_Data_summative/
 ```
 
 ---
+Team task sheet link: https://docs.google.com/spreadsheets/d/1vDnTStL2Lha4P6t_-vPUV3Y7KT5pEA-xgKN5OdKn6V0/edit?gid=0#gid=0
+
 
 ## Database Schema
 

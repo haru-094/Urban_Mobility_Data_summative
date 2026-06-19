@@ -1,0 +1,68 @@
+
+
+Urban Mobility Data Explorer — Technical Report
+
+
+
+1. Problem Framing and Dataset Analysis
+We worked with the NYC TLC Yellow Taxi trip records for January 2019. The dataset has close to 7.7 million rows and covers every yellow taxi trip made in New York City that month, including pickup and dropoff times, locations, distances, fares, and tips. We also used a zone lookup table with 265 zones to map numeric location IDs to real borough and zone names.
+Cleaning the data involved four checks. First, rows missing any of the four core fields — pickup time, dropoff time, distance, or fare — were dropped. Second, trips in which the pickup year was not 2019 or the dropoff time came before the pickup time were removed as temporal violations. Third, trips with zero or negative fares, zero or negative distances, or distances above 100 miles were filtered out as physically impossible. Fourth, we calculated the average speed for each trip and removed anything above 80 mph as a sensor error.
+We assumed that any trip from a year other than 2019 was an error in the source file, that 100 miles is an unrealistic upper limit for a city taxi trip, and that 80 mph is too fast for any legitimate taxi in urban traffic. We defined rush hour as weekday mornings from 7 to 9 AM and weekday afternoons from 4 to 7 PM, which matches how NYC transportation planners define peak periods.
+The unexpected observation was how little data we actually lost. After running all four cleaning stages on 7,667,792 records, we kept 7,599,722 of them — a retention rate of 99.11%. We expected a much messier dataset. What was especially surprising was that zero records failed the spatial check, meaning every single trip in the file referenced a valid zone ID. This gave us confidence that the insights from the dashboard were based on a genuine and representative sample of NYC taxi activity.
+
+2. System Architecture and Design Decisions
+The system has three layers. The data pipeline reads and cleans the raw CSV, then saves the result as a parquet file. The backend reads that Parquet file, loads it into a SQLite database, and serves it through a Flask REST API. The frontend is a plain HTML page that fetches data from the API and renders charts using Chart.js.
+Layer
+Technology
+What it does
+Pipeline
+Python, pandas, numpy
+Cleans raw data and engineers features
+Database
+SQLite
+Stores 7.6M cleaned trips in a star schema
+Backend API
+Flask + flask-cors
+Serves JSON to the frontend via 10 endpoints
+Frontend
+Vanilla JS + Chart.js
+Renders charts and filter controls in the browser
+
+We chose SQLite because it requires no setup — the entire database is a single file on disk, which made the project easy to run on any machine. Flask was chosen because we only needed simple read-only GET endpoints, and a heavier framework would have been unnecessary. We used vanilla JavaScript with no build tools because it kept the frontend simple and meant anyone could open the HTML file directly in a browser without installing anything.
+The database follows a star schema with one fact table (fact_trips) and one dimension table (dim_zones). Three B-Tree indexes were added on pickup_datetime, pu_location_id, and do_location_id to speed up the filtering queries that almost every API endpoint relies on.
+The main trade-off we accepted was using SQLite instead of PostgreSQL. SQLite does not handle concurrent writes, which would be a problem if multiple users were querying the dashboard at the same time. For an academic single-user project, this was fine, but a production deployment would need PostgreSQL. We also chose to save an intermediate parquet file between the pipeline and the database, which adds one extra step but means the cleaning pipeline never needs to re-run if the database is rebuilt.
+
+3. Algorithmic Logic and Data Structures
+During the pipeline, we needed to find the most popular drop-off zones across 7.6 million trip records without using any built-in sorting or counting libraries. We implemented this in feature_eng.py using a manual frequency count followed by a custom selection sort.
+The first part counts how many times each drop-off zone ID appears by iterating through every row and updating a plain Python dictionary:
+dropoff_counts = {}
+for do_id in df['DOLocationID']:
+    if do_id in dropoff_counts:  dropoff_counts[do_id] += 1
+    else:  dropoff_counts[do_id] = 1
+The second part sorts that dictionary by count using selection sort — in each pass, it finds the zone with the highest count and moves it to the front:
+for i in range(n):
+    max_idx = i
+    for j in range(i+1, n):
+        if frequency_list[j][1] > frequency_list[max_idx][1]:  max_idx = j
+    frequency_list[i], frequency_list[max_idx] = frequency_list[max_idx], frequency_list[i]
+Pseudocode: count all dropoff IDs into a dictionary → convert to list of (id, count) pairs → for each position i, find the maximum count in the remaining unsorted portion → swap it into position i → return the first k elements.
+One thing worth noting: the comment in the code calls this bubble sort, but the implementation is actually selection sort. Bubble sort swaps adjacent elements repeatedly, while selection sort finds the maximum first and then does one swap per pass. The code clearly follows the selection sort pattern.
+Time complexity is O(n + z²), where n is the number of trips and z is the number of unique zones. The counting loop is O(n) and dominates at scale. The sort is O(z²), but since z is fixed at 265 zones, this is effectively constant. Space complexity is O(z) for the dictionary and list.
+
+4. Insights and Interpretation
+Insight 1 — Rush hour does not significantly raise fares
+ Derived from comparing /api/trips/summary with and without ?is_rush_hour=true. The average fare during rush hour is almost the same as the all-day average. NYC taxi meters run on distance, not time, so heavy traffic does not increase the fare. Passengers tend to take shorter trips during peak hours, which keeps costs low. This means riding a taxi during rush hour is not as expensive as most people assume.
+Insight 2 — Manhattan has the most trips but the slowest speeds
+ Derived from /api/trips/by-borough for volume and /api/trips/speed-analysis for speed patterns. Manhattan generates far more taxi trips than any other borough, but also has the lowest average speeds, especially during rush hours. More taxis on the road in a dense borough means slower movement for all of them. This supports the case for better public transport capacity in Manhattan to reduce road congestion.
+Insight 3 — Most trips are short and cheap
+ Derived from the /api/trips/fare-distribution histogram. The largest share of trips falls in the $5 to $15 fare range, and trip counts drop sharply above $30. This tells us NYC taxis are mostly used for short local journeys rather than long cross-city rides. It also means tip income matters a lot to drivers, since the base fare on these short trips is small.
+
+5. Reflection and Future Work
+What was challenging
+Loading a 687 MB CSV with 7.7 million rows was slow. We had to use low_memory=False to avoid type warnings and chunk the database insert into 100,000-row batches with SQLite performance pragmas to make it fast enough.
+CORS errors blocked all API calls when the frontend was opened as a static file in the browser. The dashboard appeared empty with no obvious error message — the actual error was hidden in the browser console. Adding flask-cors fixed it, but it took time to diagnose.
+The frontend and backend were built by different team members in parallel. At one point, the frontend was passing a filter parameter with the wrong name, so filters had no effect — the API still returned data, just unfiltered, which made it hard to spot. Agreeing on parameter names before starting would have saved time.
+Merge conflicts in the JavaScript files slowed things down when both members were editing related functions at the same time. Clearer ownership of individual files from the start would have helped.
+What we would improve
+Replace SQLite with PostgreSQL to support multiple users accessing the dashboard at the same time. Add a date range filter so users can compare different months or seasons rather than being limited to January 2019. Expose the Top-K algorithm result through the API and display it more prominently on the dashboard with borough filtering. Deploy the Flask API to a cloud service like Render so the dashboard is accessible without a local Python setup.
+
