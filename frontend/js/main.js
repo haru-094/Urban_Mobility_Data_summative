@@ -3,7 +3,7 @@ import { fmt, setOverlay, showToast, setStatus } from './utils.js';
 import { apiFetch } from './api.js';
 import { loadSummary, loadBoroughCharts } from './overview.js';
 import { loadHourlyCharts, loadDailyChart } from './temporal.js';
-import { loadTopZones, updateZoneType, updateZoneLimit, sortZonesTable } from './geography.js';
+import { loadTopZones, updateZoneType, updateZoneLimit, sortZonesTable, loadTopKCard } from './geography.js';
 import { loadFareDistribution } from './economics.js';
 import { loadSpeedCharts } from './speed.js';
 import { loadTransparency } from './transparency.js';
@@ -48,6 +48,7 @@ async function initialLoad() {
       loadFilteredData(),
       loadBoroughCharts(),
       loadTransparency(),
+      loadTopKCard(),
     ]);
 
     setStatus('online', `${fmt(health.total_trips_in_db)} trips loaded`);

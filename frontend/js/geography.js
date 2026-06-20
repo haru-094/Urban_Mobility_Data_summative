@@ -123,3 +123,32 @@ function renderZonesTable(rows) {
       </tr>`;
   }).join('');
 }
+
+export async function loadTopKCard() {
+  const container = document.getElementById('topk-list');
+  if (!container) return;
+
+  try {
+    const data = await apiFetch('/api/trips/top-k-destinations');
+    if (!data.success) {
+      container.innerHTML = `<p class="topk-empty">Pipeline log not found — run the pipeline first.</p>`;
+      return;
+    }
+
+    container.innerHTML = data.data.map((r) => {
+      const bColor = BOROUGH_COLORS[r.borough] || '#4b5563';
+      const rankClass = r.rank <= 3 ? `rank-${r.rank}` : '';
+      return `
+        <div class="topk-row">
+          <span class="topk-medal"><span class="rank-badge ${rankClass}">${r.rank}</span></span>
+          <div class="topk-info">
+            <span class="topk-zone">${r.zone}</span>
+            <span class="topk-borough" style="color:${bColor}">${r.borough}</span>
+          </div>
+          <span class="topk-count">${fmt(r.dropoff_count)}</span>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<p class="topk-empty">Could not load algorithm output.</p>`;
+  }
+}
