@@ -1,0 +1,12 @@
+{
+  "total_records_ingested": 7667792,
+  "anomalies_detected": {
+    "missing_values_scrubbed": 0,
+    "temporal_violations": 6734,
+    "fare_or_distance_outliers": 55392,
+    "spatial_border_anomalies": 0,
+    "unrealistic_speed_glitches": 5944
+  },
+  "final_clean_records_retained": 7599722,
+  "data_retention_percentage": 99.11
+}

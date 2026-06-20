@@ -3,7 +3,7 @@ import sys
 import json
 from pathlib import Path
 
-# fixing the piepline error when running form the terimnal
+# fixing the pipeline error when running from the terminal
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.data_clean import read_data_from_paths, remove_outlier
@@ -53,8 +53,19 @@ def main():
             "unrealistic_speed_glitches": int(feature_logs.get('speed_glitches_dropped', 0))
         },
         "final_clean_records_retained": int(len(df_final)),
-        "data_retention_percentage": round((len(df_final) / initial_count) * 100, 2)
+        "data_retention_percentage": round((len(df_final) / initial_count) * 100, 2),
+        "top_k_destinations": [
+            {"location_id": int(zone_id), "dropoff_count": int(count)}
+            for zone_id, count in top_destinations
+        ]
     }
+
+    # Save the transparency report (includes top-k) to disk for the API to serve
+    log_output = project_root_path / "backend/final_data/anomaly_transparency_log.json"
+    log_output.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(log_output), "w") as f:
+        json.dump(transparency_report, f, indent=2)
+    print(f"Transparency log saved to: {log_output}")
 
     print("\n" + "="*45)
     print("TRANSPARENCY REPORT (FOR YOUR PDF REPORT SECTION 1)")

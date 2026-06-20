@@ -1,67 +1,45 @@
-export const charts = {};
+import { API_BASE } from './config.js';
 
-export function fmt(n, decimals = 0) {
-  if (n == null || isNaN(n)) return '—';
-  return Number(n).toLocaleString('en-US', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-}
+/**
+ * Builds a query string based on the current values of the global filter elements.
+ * @param {Object} extraParams - Additional parameters to merge into the query.
+ * @returns {string} The formatted query string (e.g. "?borough=Manhattan&is_rush_hour=true")
+ */
+export function buildQuery(extraParams = {}) {
+  const params = new URLSearchParams();
+  const borough = document.getElementById('filter-borough')?.value;
+  const rush = document.getElementById('filter-rush')?.value;
 
-export function fmtCurrency(n) {
-  if (n == null || isNaN(n)) return '—';
-  return '$' + fmt(n, 2);
-}
+  if (borough) params.append('borough', borough);
+  if (rush) params.append('is_rush_hour', rush);
 
-export function fmtPct(n) {
-  if (n == null || isNaN(n)) return '—';
-  return fmt(n, 1) + '%';
-}
-
-export function fmtMiles(n) {
-  if (n == null || isNaN(n)) return '—';
-  return fmt(n, 2) + ' mi';
-}
-
-export function fmtSpeed(n) {
-  if (n == null || isNaN(n)) return '—';
-  return fmt(n, 1) + ' mph';
-}
-
-export function destroyChart(id) {
-  if (charts[id]) {
-    charts[id].destroy();
-    delete charts[id];
+  for (const [k, v] of Object.entries(extraParams)) {
+    if (v != null && v !== '') {
+      params.append(k, v);
+    }
   }
+
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
 }
 
-export function setOverlay(visible) {
-  const overlay = document.getElementById('loading-overlay');
-  if (overlay) {
-    overlay.classList.toggle('hidden', !visible);
+/**
+ * Robust helper to fetch resources from the backend API.
+ * @param {string} endpoint - The relative endpoint path (e.g. "/api/trips/summary")
+ * @returns {Promise<Object>} The parsed JSON data.
+ */
+export async function apiFetch(endpoint) {
+  const url = `${API_BASE}${endpoint}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    const errorText = await response.text();
+    let parsedError;
+    try {
+      parsedError = JSON.parse(errorText);
+    } catch {
+      parsedError = { error: errorText };
+    }
+    throw new Error(parsedError.error || `HTTP error! status: ${response.status}`);
   }
-}
-
-export function showToast(msg, duration = 3500) {
-  const el = document.getElementById('toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), duration);
-}
-
-export function setKPI(id, text) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = text;
-  el.classList.remove('animate');
-  void el.offsetWidth;
-  el.classList.add('animate');
-}
-
-export function setStatus(state, text) {
-  const dot = document.getElementById('status-dot');
-  const span = document.getElementById('status-text');
-  if (dot) dot.className = 'status-dot ' + state;
-  if (span) span.textContent = text;
+  return response.json();
 }

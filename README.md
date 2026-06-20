@@ -56,8 +56,9 @@ Urban_Mobility_Data_summative/
 ```
 
 ---
-Team task sheet link: https://docs.google.com/spreadsheets/d/1vDnTStL2Lha4P6t_-vPUV3Y7KT5pEA-xgKN5OdKn6V0/edit?gid=0#gid=0
 
+- **Team Task Sheet:** [Google Sheets Link](https://docs.google.com/spreadsheets/d/1vDnTStL2Lha4P6t_-vPUV3Y7KT5pEA-xgKN5OdKn6V0/edit?gid=0#gid=0)
+- **Video Walkthrough:** [YouTube Demonstration Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ) *(Placeholder link: replace with actual video URL before final submission)*
 
 ## Database Schema
 
@@ -129,6 +130,7 @@ The Flask server runs on `http://localhost:5000`. All endpoints return JSON.
 | GET | `/api/trips/fare-distribution` | Bucketed fare histogram ($5 increments) |
 | GET | `/api/trips/speed-analysis` | Avg speed mph by hour of day |
 | GET | `/api/transparency` | Pre-computed pipeline quality report |
+| GET | `/api/trips/top-k-destinations` | Top-K drop-off zones ranked by selection sort |
 
 ### Query Parameters
 
@@ -169,7 +171,7 @@ source .venv/bin/activate
 ### Step 2 — Install Dependencies
 
 ```bash
-pip install pandas numpy pyarrow Flask flask-cors
+pip install -r requirements.txt
 ```
 
 ---

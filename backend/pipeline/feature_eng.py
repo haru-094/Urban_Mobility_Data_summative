@@ -26,7 +26,7 @@ def selecting_features(df):
 
     return df, anomaly_log
 
-# adding the bubble sort algorithm
+# adding the selection sort algorithm
 def find_top_k_destinations(df, k=10):
     
     dropoff_counts = {}

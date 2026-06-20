@@ -334,6 +334,40 @@ def get_transparency_report():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/trips/top-k-destinations', methods=['GET'])
+def get_top_k_destinations():
+    """Returns the Top-K drop-off zones ranked by the custom selection sort algorithm,
+    enriched with zone names from the database."""
+    try:
+        if not log_path.exists():
+            return jsonify({"success": False, "error": "Transparency log not found. Run pipeline first."}), 404
+        with open(log_path, "r") as f:
+            report = json.load(f)
+
+        raw = report.get("top_k_destinations", [])
+        if not raw:
+            return jsonify({"success": False, "error": "No top-k data found. Re-run the pipeline."}), 404
+
+        conn = get_db_connection()
+        results = []
+        for i, item in enumerate(raw):
+            loc_id = item["location_id"]
+            row = conn.execute(
+                "SELECT zone, borough FROM dim_zones WHERE location_id = ?", (loc_id,)
+            ).fetchone()
+            results.append({
+                "rank":          i + 1,
+                "location_id":   loc_id,
+                "zone":          row["zone"]    if row else f"Zone {loc_id}",
+                "borough":       row["borough"] if row else "Unknown",
+                "dropoff_count": item["dropoff_count"],
+            })
+        conn.close()
+        return jsonify({"success": True, "algorithm": "selection_sort", "data": results}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -368,5 +402,6 @@ if __name__ == '__main__':
     print("    GET /api/trips/top-zones")
     print("    GET /api/trips/fare-distribution")
     print("    GET /api/trips/speed-analysis")
+    print("    GET /api/trips/top-k-destinations")
     print("=" * 55)
     app.run(host='0.0.0.0', port=5000, debug=True)

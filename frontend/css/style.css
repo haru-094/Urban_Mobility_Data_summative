@@ -385,6 +385,16 @@ body {
   margin-top: 16px;
 }
 
+.chart-card--wide {
+  /* Class defined to prevent warnings, layout is controlled by charts-row grid adjustment */
+}
+
+@media (min-width: 1025px) {
+  .charts-row:has(.chart-card--wide:first-child):has(.chart-card:last-child:not(.chart-card--wide)) {
+    grid-template-columns: 1.6fr 1fr;
+  }
+}
+
 .chart-card {
   padding: 20px 22px;
 }
