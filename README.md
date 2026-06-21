@@ -58,7 +58,7 @@ Urban_Mobility_Data_summative/
 ---
 
 - **Team Task Sheet:** [Google Sheets Link](https://docs.google.com/spreadsheets/d/1vDnTStL2Lha4P6t_-vPUV3Y7KT5pEA-xgKN5OdKn6V0/edit?gid=0#gid=0)
-- **Video Walkthrough:** [YouTube Demonstration Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ) *(Placeholder link: replace with actual video URL before final submission)*
+- **Video Walkthrough:** [Loom Demonstration Link](https://www.loom.com/share/d90c9866db464f629510eebd90479365)
 
 ## Database Schema
 
